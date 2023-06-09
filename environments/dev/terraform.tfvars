@@ -1,0 +1,5 @@
+environment           = "dev"
+region                = "us-east-1"
+vpc_id                = "vpc-0e24e045cfe679aad"
+db_instance_class     = "db.t4g.medium"
+db_cluster_identifier = "web-platform-dev-cluster"

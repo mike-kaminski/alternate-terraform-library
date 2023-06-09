@@ -1,0 +1,50 @@
+name: "Account Infrastructure"
+on:
+  # Manual trigger
+  workflow_dispatch:
+  push:
+    branches: [ master ]
+    paths:
+      - 'account/**'
+  pull_request:
+    branches: [ master ]
+    paths:
+      - 'account/**'
+defaults:
+  run:
+    shell: bash
+    working-directory: account
+jobs:
+  terraform:
+    name:  ${{matrix.runner}} - ${{ matrix.environment }}
+    runs-on: [ self-hosted,  '${{ matrix.runner }}']
+    strategy:
+      max-parallel: 1
+      matrix:
+         include:
+           - environment: nonprod
+             runner: awsdtfeenp
+           - environment: prod
+             runner: awsdtfee
+    env:
+      TF_VAR_artifactory_password: ${{ secrets.ARTIFACTORY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: synced-actions/setup-terraform@v1
+        with:
+          terraform_wrapper: false
+      - name: Terraform Init
+        id: init
+        run: |
+           rm -rf .terraform
+           terraform init -backend-config=${{ matrix.environment }}/backend.tfvars -upgrade=true -no-color -input=false
+      - name: Terraform Plan
+        id: plan
+        run: |
+          terraform plan -input=false -var-file=${{ matrix.environment }}/terraform.tfvars -no-color
+      - name: Terraform Apply
+        # NOTE: ONLY APPLY THE TERRAFORM CHANGES IF MASTER BRANCH
+        # PERMITS VALIDATING BRANCHES/PULL REQUESTS WITHOUT CHANGING ANYTHING
+        if: github.ref == 'refs/heads/master'
+        id: apply
+        run: terraform apply -auto-approve -input=false -var-file=${{ matrix.environment }}/terraform.tfvars

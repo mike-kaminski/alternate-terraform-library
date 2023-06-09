@@ -1,0 +1,5 @@
+environment       = "prod"
+region            = "us-east-1"
+vpc_id            = "vpc-10e0086a"
+db_instance_class = "db.r5.large"
+db_cluster_identifier = "web-platform-prod-cluster"
